@@ -6,8 +6,8 @@ const timeOfDay = ref<string | null>(null);
 
 <template>
   <div>
-    <button @click="">朝</button>
-    <button @click="">昼</button>
-    <button @click="">夜</button>
+    <button @click="timeOfDay = '朝'">朝</button>
+    <button @click="timeOfDay = '昼'">昼</button>
+    <button @click="timeOfDay = '夜'">夜</button>
   </div>
 </template>
