@@ -1,15 +1,30 @@
 <script setup lang="ts">
 import TodoList from "./components/TodoList.vue";
 import TodoAddForm from "./components/TodoAddForm.vue";
-import BaseInput from "./components/BaseInput.vue";
-import TodoItem from "./components/TodoItem.vue";
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
+import axios from "axios";
 
 type Todo = {
   id: number;
   title: string;
   completed: boolean;
 };
+// ✅ APIから取得する関数
+const fetchTodos = async () => {
+  try {
+    const res = await axios.get(
+      "https://jsonplaceholder.typicode.com/todos?_limit=5"
+    );
+    todos.value = res.data;
+  } catch (error) {
+    console.error("データの取得に失敗しました", error);
+  }
+};
+
+// ✅ マウント時に取得
+onMounted(() => {
+  fetchTodos();
+});
 
 const todos = ref<Todo[]>([
   {
@@ -33,49 +48,63 @@ const newTodo = ref<string>("");
 // リアクティブな変数（newTodo）を定義
 // ref<string>("") は Vueのリアクティブ機能（状態管理）を使って、「空の文字列（""）」を状態として保持する
 // string は 型定義（この変数は「文字列型だよ」と明示）
-function addTodo() {
-  // 条件チェック
+async function addTodo() {
   if (!newTodo.value.trim()) return;
-  // 「もし、入力された文字が空（またはスペースだけ）なら、追加処理をやめる（Todoに追加しない）」ということ！
-  // todos に追加
-  todos.value.push({
-    id: Date.now(), // ユニークなID
-    title: newTodo.value,
-    completed: false,
-  });
-  // 入力欄をリセット
-  newTodo.value = "";
-}
-function deleteTodo(id: number) {
-  todos.value = todos.value.filter((todo) => todo.id !== id);
+
+  try {
+    const res = await axios.post("https://jsonplaceholder.typicode.com/todos", {
+      title: newTodo.value,
+      completed: false,
+    });
+
+    // APIのレスポンスを追加（※モックAPIなのでidは固定 or 仮のもの）
+    todos.value.push({
+      id: res.data.id || Date.now(), // idがAPIから返らない場合に備える
+      title: res.data.title,
+      completed: res.data.completed,
+    });
+
+    newTodo.value = "";
+  } catch (error) {
+    console.error("追加に失敗しました", error);
+  }
 }
 
-function completeTodo(id: number) {
-  const target = todos.value.find((todo) => todo.id === id);
-  // todos の中で id が一致した1件のTodo
-  if (target) target.completed = !target.completed;
+async function deleteTodo(id: number) {
+  try {
+    await axios.delete(`https://jsonplaceholder.typicode.com/todos/${id}`);
+    todos.value = todos.value.filter((todo) => todo.id !== id);
+  } catch (error) {
+    console.error("削除に失敗しました", error);
+  }
+}
+
+async function completeTodo(id: number) {
+  try {
+    // ✅ サーバーに「完了にするよ」と伝える PATCHリクエスト
+    await axios.patch(`https://jsonplaceholder.typicode.com/todos/${id}`, {
+      completed: true,
+    });
+
+    // ✅ ローカルの表示も完了状態に更新（サーバーの返事が成功したら）
+    const target = todos.value.find((todo) => todo.id === id);
+    if (target) target.completed = true;
+  } catch (error) {
+    console.error("完了処理に失敗しました", error);
+  }
 }
 </script>
 <template>
   <div class="app">
     <h1 class="title">今日やること</h1>
-    <BaseInput
+    <!-- ここが変更点！ -->
+    <TodoAddForm
       :modelValue="newTodo"
       @update:modelValue="newTodo = $event"
-      class="input"
+      @add="addTodo"
     />
-    <BaseButton label="追加" class="btn-add" @click="addTodo" />
-    <ul class="todo-list">
-      <TodoItem
-        v-for="todo in todos"
-        :key="todo.id"
-        :todo="todo"
-        @delete="deleteTodo"
-      />
-    </ul>
+    <TodoList :todos="todos" @delete="deleteTodo" @complete="completeTodo" />
   </div>
-  <TodoList />
-  <TodoAddForm />
 </template>
 
 <style scoped>
@@ -109,38 +138,6 @@ function completeTodo(id: number) {
   border-bottom: 1px solid #cdcdcd;
   opacity: 1;
   padding: 5px;
-}
-.btn-add {
-  width: 57px;
-  height: 30px;
-  background: #c1c1c1 0% 0% no-repeat padding-box;
-  border-radius: 4px;
-  opacity: 1;
-  color: #fff;
-  border: #c1c1c1;
-  margin-left: 10px;
-}
-
-.btn-dele {
-  width: 57px;
-  height: 30px;
-  background: #ff3700 0% 0% no-repeat padding-box;
-  border-radius: 4px;
-  opacity: 1;
-  color: #fff;
-  border: #ff3700;
-  margin-left: 10px;
-}
-
-.btn-comp {
-  width: 57px;
-  height: 30px;
-  background: #008cff 0% 0% no-repeat padding-box;
-  border-radius: 4px;
-  opacity: 1;
-  color: #fff;
-  border: #008cff;
-  margin-left: 10px;
 }
 
 .completed {

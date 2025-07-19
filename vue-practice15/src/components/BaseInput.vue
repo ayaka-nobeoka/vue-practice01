@@ -1,7 +1,5 @@
 <!-- BaseInput.vue -->
 <script setup lang="ts">
-import { defineProps, defineEmits } from "vue";
-
 type Props = {
   modelValue: string;
 };

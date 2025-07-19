@@ -1,16 +1,34 @@
-<!-- BaseButton.vue -->
 <script setup lang="ts">
-type Props = {
-  label: string; // 親から受け取るテキスト（ラベル）
-};
-const props = defineProps<Props>(); // 親からpropsを受け取る
-const emit = defineEmits(["click"]); // 親へイベントを伝える
+const props = defineProps<{
+  label: string;
+  variant?: "default" | "danger" | "success";
+}>();
 </script>
 
 <template>
-  <button @click="$emit('click')">
-    <!-- 親にclickイベントを渡す -->
+  <!-- 👇 ここが修正ポイント -->
+  <button :class="['base-button', props.variant || 'default']">
     {{ props.label }}
-    <!-- 親からもらったテキストを表示 -->
   </button>
 </template>
+
+<style scoped>
+.base-button {
+  width: 57px;
+  height: 30px;
+  border-radius: 4px;
+  color: #fff;
+  border: none;
+  margin-left: 10px;
+}
+
+.default {
+  background-color: #c1c1c1;
+}
+.danger {
+  background-color: #ff3700;
+}
+.success {
+  background-color: #008cff;
+}
+</style>

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import TodoItem from "./TodoItem.vue";
-import { defineProps, defineEmits } from "vue";
 
 type Todo = {
   id: number;
